@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"strings"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -36,7 +38,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	body := "Hello World!"
+	body := bodyFrom(os.Args)
 	err = ch.PublishWithContext(ctx,
 		"",     // exchange
 		q.Name, // routing key
@@ -48,4 +50,19 @@ func main() {
 		})
 	failOnError(err, "Failed to publish a message")
 	log.Printf(" [x] Sent %s", body)
+}
+
+
+// bodyFrom returns a string to be used as the message body for a new task.
+// If args contains at least two elements, the second and subsequent elements
+// are joined with spaces to form the message body. Otherwise, the default
+// message "Hello World!" is used.
+func bodyFrom(args []string) string {
+	var s string
+	if len(args) < 2 || os.Args[1] == "" {
+		s = "Hello World!"
+	} else {
+		s = strings.Join(args[1:], " ")
+	}
+	return s
 }
